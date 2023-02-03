@@ -8,15 +8,18 @@
 
 ///////////////////// VARIABLES ////////////////////
 lv_obj_t *ui_DataScreen;
+void ui_event_DataScreenTempPanel(lv_event_t *e);
 lv_obj_t *ui_DataScreenTempPanel;
 lv_obj_t *ui_DataScreenTempLabel;
 lv_obj_t *ui_DataScreenTempValueLabel;
 lv_obj_t *ui_DataScreenTempUnitLabel;
+void ui_event_DataScreenHumidPanel(lv_event_t *e);
 lv_obj_t *ui_DataScreenHumidPanel;
 lv_obj_t *ui_DataScreenHumidLabel;
 lv_obj_t *ui_DataScreenHumidValueLabel;
 lv_obj_t *ui_DataScreenHumidUnitLabel;
 lv_obj_t *ui_DatsScreenChart;
+lv_obj_t *ui_DataScreenChartTitle;
 lv_obj_t *ui_DataScreenConnectLabel;
 void ui_event_DataScreenSettingBtn(lv_event_t *e);
 lv_obj_t *ui_DataScreenSettingBtn;
@@ -26,19 +29,23 @@ lv_obj_t *ui_SettingScreenLabel;
 lv_obj_t *ui_SeetingScreenPanel;
 lv_obj_t *ui_SettingScreenSsidLabel;
 lv_obj_t *ui_SettingScreenSsidTextArea;
+void ui_event_SettingScreenSsidEditBtn(lv_event_t *e);
 lv_obj_t *ui_SettingScreenSsidEditBtn;
 lv_obj_t *ui_SettingScreenSsidEditImg;
 lv_obj_t *ui_SettingScreenWifiPwLabel;
 lv_obj_t *ui_SettingScreenWifiPwTextArea;
+void ui_event_SettingScreenWifiPwEditBtn(lv_event_t *e);
 lv_obj_t *ui_SettingScreenWifiPwEditBtn;
 lv_obj_t *ui_SettingScreenWifiPwImg;
 lv_obj_t *ui_SettingScreenMacLabel;
 lv_obj_t *ui_SettingScreenMacTextArea;
 lv_obj_t *ui_SettingScreenLatLabel;
 lv_obj_t *ui_SettingScreenLatTextArea;
+void ui_event_SettingScreenLatEditBtn(lv_event_t *e);
 lv_obj_t *ui_SettingScreenLatEditBtn;
 lv_obj_t *ui_SettingScreenLatEditImg;
 lv_obj_t *ui_SettingScreenLongTextArea;
+void ui_event_SettingScreenLongEditBtn(lv_event_t *e);
 lv_obj_t *ui_SettingScreenLongEditBtn;
 lv_obj_t *ui_SettingScreenLongEditImg;
 void ui_event_SettingScreenConfirmBtn(lv_event_t *e);
@@ -69,6 +76,24 @@ lv_obj_t *ui_EditTextScreenCancelLabel;
 ///////////////////// ANIMATIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////
+void ui_event_DataScreenTempPanel(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        visibleTempDataChart(e);
+    }
+}
+void ui_event_DataScreenHumidPanel(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        visibleHumidDataChart(e);
+    }
+}
 void ui_event_DataScreenSettingBtn(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -76,6 +101,42 @@ void ui_event_DataScreenSettingBtn(lv_event_t *e)
     if (event_code == LV_EVENT_CLICKED)
     {
         toSettingPage(e);
+    }
+}
+void ui_event_SettingScreenSsidEditBtn(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        toEditSsid(e);
+    }
+}
+void ui_event_SettingScreenWifiPwEditBtn(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        toEditWifiPw(e);
+    }
+}
+void ui_event_SettingScreenLatEditBtn(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        toEditLat(e);
+    }
+}
+void ui_event_SettingScreenLongEditBtn(lv_event_t *e)
+{
+    lv_event_code_t event_code = lv_event_get_code(e);
+    lv_obj_t *target = lv_event_get_target(e);
+    if (event_code == LV_EVENT_CLICKED)
+    {
+        toEditLong(e);
     }
 }
 void ui_event_SettingScreenConfirmBtn(lv_event_t *e)
@@ -143,7 +204,7 @@ void ui_DataScreen_screen_init(void)
     lv_obj_set_width(ui_DataScreenTempValueLabel, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_DataScreenTempValueLabel, LV_SIZE_CONTENT); /// 1
     lv_obj_set_align(ui_DataScreenTempValueLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_DataScreenTempValueLabel, "[0]");
+    lv_label_set_text(ui_DataScreenTempValueLabel, "-");
     lv_obj_set_style_text_font(ui_DataScreenTempValueLabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_DataScreenTempUnitLabel = lv_label_create(ui_DataScreenTempPanel);
@@ -176,7 +237,7 @@ void ui_DataScreen_screen_init(void)
     lv_obj_set_width(ui_DataScreenHumidValueLabel, LV_SIZE_CONTENT);  /// 1
     lv_obj_set_height(ui_DataScreenHumidValueLabel, LV_SIZE_CONTENT); /// 1
     lv_obj_set_align(ui_DataScreenHumidValueLabel, LV_ALIGN_CENTER);
-    lv_label_set_text(ui_DataScreenHumidValueLabel, "[0]");
+    lv_label_set_text(ui_DataScreenHumidValueLabel, "-");
     lv_obj_set_style_text_font(ui_DataScreenHumidValueLabel, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     ui_DataScreenHumidUnitLabel = lv_label_create(ui_DataScreenHumidPanel);
@@ -195,18 +256,27 @@ void ui_DataScreen_screen_init(void)
     lv_obj_set_align(ui_DatsScreenChart, LV_ALIGN_CENTER);
     lv_chart_set_type(ui_DatsScreenChart, LV_CHART_TYPE_LINE);
     lv_chart_set_point_count(ui_DatsScreenChart, 25);
-    lv_chart_set_range(ui_DatsScreenChart, LV_CHART_AXIS_PRIMARY_Y, -10, 50);
-    lv_chart_set_div_line_count(ui_DatsScreenChart, 5, 5);
-    lv_chart_set_axis_tick(ui_DatsScreenChart, LV_CHART_AXIS_PRIMARY_X, 10, 5, 5, 2, true, 50);
-    lv_chart_set_axis_tick(ui_DatsScreenChart, LV_CHART_AXIS_PRIMARY_Y, 10, 5, 5, 5, true, 50);
+    lv_chart_set_range(ui_DatsScreenChart, LV_CHART_AXIS_PRIMARY_Y, -10, 40);
+    lv_chart_set_range(ui_DatsScreenChart, LV_CHART_AXIS_SECONDARY_Y, 0, 100);
+    lv_chart_set_div_line_count(ui_DatsScreenChart, 6, 5);
+    lv_chart_set_axis_tick(ui_DatsScreenChart, LV_CHART_AXIS_PRIMARY_X, 10, 5, 5, 5, false, 50);
+    lv_chart_set_axis_tick(ui_DatsScreenChart, LV_CHART_AXIS_PRIMARY_Y, 10, 5, 6, 5, true, 50);
     lv_chart_series_t *ui_DatsScreenChart_series_1 = lv_chart_add_series(ui_DatsScreenChart, lv_color_hex(0xFF5959),
                                                                          LV_CHART_AXIS_PRIMARY_Y);
-    static lv_coord_t ui_DatsScreenChart_series_1_array[] = {0, 10, 20, 40, 80, 80, 40, 20, 10, 0};
+    static lv_coord_t ui_DatsScreenChart_series_1_array[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     lv_chart_set_ext_y_array(ui_DatsScreenChart, ui_DatsScreenChart_series_1, ui_DatsScreenChart_series_1_array);
     lv_chart_series_t *ui_DatsScreenChart_series_2 = lv_chart_add_series(ui_DatsScreenChart, lv_color_hex(0x3393FF),
                                                                          LV_CHART_AXIS_SECONDARY_Y);
-    static lv_coord_t ui_DatsScreenChart_series_2_array[] = {2, 7, 33, 67, 44, 18, 4, 6};
+    static lv_coord_t ui_DatsScreenChart_series_2_array[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     lv_chart_set_ext_y_array(ui_DatsScreenChart, ui_DatsScreenChart_series_2, ui_DatsScreenChart_series_2_array);
+
+    ui_DataScreenChartTitle = lv_label_create(ui_DataScreen);
+    lv_obj_set_width(ui_DataScreenChartTitle, LV_SIZE_CONTENT);  /// 1
+    lv_obj_set_height(ui_DataScreenChartTitle, LV_SIZE_CONTENT); /// 1
+    lv_obj_set_x(ui_DataScreenChartTitle, -55);
+    lv_obj_set_y(ui_DataScreenChartTitle, 90);
+    lv_obj_set_align(ui_DataScreenChartTitle, LV_ALIGN_CENTER);
+    lv_label_set_text(ui_DataScreenChartTitle, "Temp");
 
     ui_DataScreenConnectLabel = lv_label_create(ui_DataScreen);
     lv_obj_set_width(ui_DataScreenConnectLabel, LV_SIZE_CONTENT);  /// 1
@@ -231,6 +301,8 @@ void ui_DataScreen_screen_init(void)
     lv_obj_set_align(ui_DatsScreenSettingLabel, LV_ALIGN_CENTER);
     lv_label_set_text(ui_DatsScreenSettingLabel, "Setting");
 
+    lv_obj_add_event_cb(ui_DataScreenTempPanel, ui_event_DataScreenTempPanel, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_DataScreenHumidPanel, ui_event_DataScreenHumidPanel, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_DataScreenSettingBtn, ui_event_DataScreenSettingBtn, LV_EVENT_ALL, NULL);
 }
 void ui_SettingScreen_screen_init(void)
@@ -460,6 +532,10 @@ void ui_SettingScreen_screen_init(void)
     lv_obj_set_align(ui_SettingScreenCancelLabel, LV_ALIGN_CENTER);
     lv_label_set_text(ui_SettingScreenCancelLabel, "Cancel");
 
+    lv_obj_add_event_cb(ui_SettingScreenSsidEditBtn, ui_event_SettingScreenSsidEditBtn, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_SettingScreenWifiPwEditBtn, ui_event_SettingScreenWifiPwEditBtn, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_SettingScreenLatEditBtn, ui_event_SettingScreenLatEditBtn, LV_EVENT_ALL, NULL);
+    lv_obj_add_event_cb(ui_SettingScreenLongEditBtn, ui_event_SettingScreenLongEditBtn, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_SettingScreenConfirmBtn, ui_event_SettingScreenConfirmBtn, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_SettingScreenCancelBtn, ui_event_SettingScreenCancelBtn, LV_EVENT_ALL, NULL);
 }
@@ -543,5 +619,4 @@ void ui_init(void)
     ui_DataScreen_screen_init();
     ui_SettingScreen_screen_init();
     ui_EditTextScreen_screen_init();
-    lv_disp_load_scr(ui_DataScreen);
 }
