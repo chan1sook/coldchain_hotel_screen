@@ -5,14 +5,14 @@
 #include <SPI.h>
 #include <TFT_eSPI.h>
 #include "FT62XXTouchScreen.h"
-
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include "Adafruit_SHTC3.h"
 #include <WiFi.h>
 #include <EEPROM.h>
 #include <MQTT.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
-
-#define EEPROM_WRITE
 
 TFT_eSPI tft = TFT_eSPI();
 FT62XXTouchScreen touchScreen = FT62XXTouchScreen(TFT_WIDTH, PIN_SDA, PIN_SCL);
@@ -51,6 +51,7 @@ const esp_timer_create_args_t ui_update_args = {
 #define SSID_MAXLENGTH (64)
 #define WIFIPW_MAXLENGTH (32)
 
+#define EEPROM_WRITE
 #define EEPROM_HEADER_KEY (0b1011110010100000010001001110010000111101010001111001100011110011L)
 #define EEPROM_HEADER_ADDR (0)
 #define EEPROM_SSID_ADDR (EEPROM_HEADER_ADDR + sizeof(uint64_t))
@@ -58,6 +59,11 @@ const esp_timer_create_args_t ui_update_args = {
 #define EEPROM_GPSLAT_ADDR (EEPROM_WIFIPW_ADDR + WIFIPW_MAXLENGTH)
 #define EEPROM_GPSLONG_ADDR (EEPROM_GPSLAT_ADDR + sizeof(double))
 #define EEPROM_TOTAL_BYTES (EEPROM_GPSLONG_ADDR + sizeof(double))
+
+#define ONE_WIRE_BUS (32)
+OneWire oneWire(ONE_WIRE_BUS);
+DallasTemperature ds18b20(&oneWire);
+Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
 
 unsigned long dataReadTs;
 wl_status_t currentWifiStatus;
@@ -106,6 +112,9 @@ static double getHumidity();
 void setup()
 {
   Serial.begin(115200);
+
+  ds18b20.begin();
+  shtc3.begin();
 
   macAddress = WiFi.macAddress();
   macAddress.replace(":", "");
@@ -198,7 +207,7 @@ void loop()
     tempDataSeries[DATASET_LENGTH - 1] = temp;
     humidDataSeries[DATASET_LENGTH - 1] = humid;
 
-    if (mqttClient.connected() && !isnan(temp) && !isnan(humid))
+    if (mqttClient.connected())
     {
       emitMqtt(temp, humid);
     }
@@ -343,9 +352,23 @@ static void emitMqtt(double temp, double humid)
   String wPayload = "W:";
   wPayload.concat(sharedPayload);
   wPayload.concat(":");
-  wPayload.concat(temp);
+  if (isnan(temp))
+  {
+    wPayload.concat("-");
+  }
+  else
+  {
+    wPayload.concat(temp);
+  }
   wPayload.concat(":");
-  wPayload.concat(humid);
+  if (isnan(humid))
+  {
+    wPayload.concat("-");
+  }
+  else
+  {
+    wPayload.concat(humid);
+  }
   wPayload.concat(":100:");
   wPayload.concat(WiFi.RSSI());
 
@@ -362,6 +385,13 @@ static void emitMqtt(double temp, double humid)
   bool geoSentSuccess = mqttClient.publish(topic.c_str(), geoPayload.c_str());
 
   mqttSentSuccess = hbSentSuccess && wSentSuccess && geoSentSuccess;
+  Serial.print("HB:");
+  Serial.print(hbSentSuccess ? "T" : "F");
+  Serial.print(", W:");
+  Serial.print(wSentSuccess ? "T" : "F");
+  Serial.print(", GEO:");
+  Serial.print(geoSentSuccess ? "T" : "F");
+  Serial.println();
 }
 
 void switchVisibleChartTo(chart_type type)
@@ -527,6 +557,7 @@ static void updateEEPROM()
   EEPROM.commit();
 }
 
+#if SENSOR_MOCKUP_DEMO
 static double getTemp()
 {
   double t1 = millis() * 0.001;
@@ -539,3 +570,23 @@ static double getHumidity()
   double humid = 50 + (50 * __dRandomT(t1));
   return humid;
 }
+#else
+static double getTemp()
+{
+  ds18b20.requestTemperatures();
+  double temp = ds18b20.getTempCByIndex(0);
+  return (temp == DEVICE_DISCONNECTED_C) ? NAN : temp;
+}
+static double getHumidity()
+{
+  static sensors_event_t humidity, temp;
+  if (shtc3.getEvent(&humidity, &temp))
+  {
+    return humidity.relative_humidity;
+  }
+  else
+  {
+    return NAN;
+  }
+}
+#endif
