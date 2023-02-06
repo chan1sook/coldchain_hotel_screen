@@ -1,4 +1,4 @@
-# WiFinder Firmware
+# Coldchain Hotel
 
 ## Stucture
 - squareline/ => UI Designed by [SquareLine Studio](https://squareline.io/)
