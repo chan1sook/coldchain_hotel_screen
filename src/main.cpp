@@ -112,6 +112,7 @@ static double getHumidity();
 void setup()
 {
   Serial.begin(115200);
+  Wire.setPins(PIN_SDA, PIN_SCL);
 
   ds18b20.begin();
   shtc3.begin();
