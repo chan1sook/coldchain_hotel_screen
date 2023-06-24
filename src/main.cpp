@@ -60,10 +60,8 @@ const esp_timer_create_args_t ui_update_args = {
 #define EEPROM_GPSLONG_ADDR (EEPROM_GPSLAT_ADDR + sizeof(double))
 #define EEPROM_TOTAL_BYTES (EEPROM_GPSLONG_ADDR + sizeof(double))
 
-#define ONE_WIRE_BUS (32)
-OneWire oneWire(ONE_WIRE_BUS);
-DallasTemperature ds18b20(&oneWire);
 Adafruit_SHTC3 shtc3 = Adafruit_SHTC3();
+static sensors_event_t humidityEvent, tempEvent;
 
 unsigned long dataReadTs;
 wl_status_t currentWifiStatus;
@@ -114,7 +112,6 @@ void setup()
   Serial.begin(115200);
   Wire.setPins(PIN_SDA, PIN_SCL);
 
-  ds18b20.begin();
   shtc3.begin();
 
   macAddress = WiFi.macAddress();
@@ -574,16 +571,20 @@ static double getHumidity()
 #else
 static double getTemp()
 {
-  ds18b20.requestTemperatures();
-  double temp = ds18b20.getTempCByIndex(0);
-  return (temp == DEVICE_DISCONNECTED_C) ? NAN : temp;
+  if (shtc3.getEvent(&humidityEvent, &tempEvent))
+  {
+    return tempEvent.temperature;
+  }
+  else
+  {
+    return NAN;
+  }
 }
 static double getHumidity()
 {
-  static sensors_event_t humidity, temp;
-  if (shtc3.getEvent(&humidity, &temp))
+  if (shtc3.getEvent(&humidityEvent, &tempEvent))
   {
-    return humidity.relative_humidity;
+    return humidityEvent.relative_humidity;
   }
   else
   {
